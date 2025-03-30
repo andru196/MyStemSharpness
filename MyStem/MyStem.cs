@@ -11,7 +11,7 @@ using System.Text;
 /// <remarks>
 /// This class is not recommended for use in multithreaded scenarios.
 /// </remarks>
-public sealed class SingleThreadedMyStem : IDisposable
+public sealed class MyStem : IDisposable
 {
 	/// <summary>
 	/// The process instance for the MyStem executable.
@@ -29,10 +29,10 @@ public sealed class SingleThreadedMyStem : IDisposable
 	public MyStemOptions Options { get; }
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="SingleThreadedMyStem"/> class with the specified options.
+	/// Initializes a new instance of the <see cref="MyStem"/> class with the specified options.
 	/// </summary>
 	/// <param name="options">The MyStem options to use.</param>
-	public SingleThreadedMyStem(MyStemOptions? options = null)
+	public MyStem(MyStemOptions? options = null)
 	{
 		Options = options ?? new MyStemOptions();
 	}
@@ -98,7 +98,7 @@ public sealed class SingleThreadedMyStem : IDisposable
 	}
 
 	/// <summary>
-	/// Disposes of the resources used by the <see cref="SingleThreadedMyStem"/> object.
+	/// Disposes of the resources used by the <see cref="MyStem"/> object.
 	/// </summary>
 	public void Dispose()
 	{
@@ -122,7 +122,7 @@ public sealed class SingleThreadedMyStem : IDisposable
 	}
 
 	/// <summary>
-	/// Finalizes the <see cref="SingleThreadedMyStem"/> object before it is reclaimed by garbage collection.
+	/// Finalizes the <see cref="MyStem"/> object before it is reclaimed by garbage collection.
 	/// </summary>
-	~SingleThreadedMyStem() => Dispose();
+	~MyStem() => Dispose();
 }

@@ -66,9 +66,9 @@ public class SingleThreadedExample
 }
 ```
 
-### 🧵 Многопоточный анализ
+### 🧵 Быстрый анализ
 
-Для приложений, где важна высокая производительность и параллельная обработка больших объемов текста, используйте класс `MultiThreadedMyStem`.
+Для приложений, где важна высокая производительность и параллельная обработка больших объемов текста, используйте класс `FastMyStem`.
 
 ```csharp
 using MyStem;
@@ -76,15 +76,15 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-public class MultiThreadedExample
+public class FastMyStemExample
 {
     public static async Task Main(string[] args)
     {
         // Укажите путь к исполняемому файлу MyStem, если он отличается от "mystem.exe"
-        MultiThreadedMyStem.PathToMyStem = "path/to/mystem.exe";
+        FastMyStem.PathToMyStem = "path/to/mystem.exe";
 
         // Создайте экземпляр класса
-        using var myStem = new MultiThreadedMyStem();
+        using var myStem = new FastMyStem();
         myStem.Initialize(); // Инициализация процесса MyStem
 
         string textToAnalyze1 = "Первый текст для параллельного анализа.";
@@ -171,7 +171,7 @@ public class OptionsExample
 Несмотря на возможные трудности, MyStemSharpness разработан с акцентом на высокую производительность:
 
 - **Эффективное управление процессами:** Библиотека переиспользует экземпляры процесса MyStem, минимизируя накладные расходы на запуск новых процессов для каждого запроса.
-- **Асинхронное чтение (многопоточный режим):** В классе `MultiThreadedMyStem` используется асинхронное чтение выходных данных MyStem, что позволяет избежать блокировки вызывающего потока и повышает общую пропускную способность.
+- **Асинхронное чтение (многопоточный режим):** В классе `FastMyStem` используется асинхронное чтение выходных данных MyStem, что позволяет избежать блокировки вызывающего потока и повышает общую пропускную способность.
 - **Оптимизированные буферы:** Для чтения выходных данных используются буферы, размер которых динамически оценивается на основе размера входного текста, что снижает количество операций выделения памяти.
 - **Разделение на однопоточную и многопоточную версии:** Предоставляя отдельные классы для разных сценариев использования, мы позволяем вам выбирать оптимальный подход для ваших конкретных потребностей, избегая ненужной синхронизации в однопоточных сценариях.
 
@@ -249,9 +249,9 @@ public class SingleThreadedExample
 }
 ```
 
-### 🧵 Multi-Threaded Analysis
+### 🧵 Fast Analysis
 
-For applications where high performance and parallel processing of large volumes of text are important, use the `MultiThreadedMyStem` class.
+For applications where high performance and parallel processing of large volumes of text are important, use the `FastMyStem` class.
 
 ```csharp
 using MyStem;
@@ -259,15 +259,15 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-public class MultiThreadedExample
+public class FastMyStemExample
 {
     public static async Task Main(string[] args)
     {
         // Specify the path to the MyStem executable if it's different from "mystem.exe"
-        MultiThreadedMyStem.PathToMyStem = "path/to/mystem.exe";
+        FastMyStem.PathToMyStem = "path/to/mystem.exe";
 
         // Create an instance of the class
-        using var myStem = new MultiThreadedMyStem();
+        using var myStem = new FastMyStem();
         myStem.Initialize(); // Initialize the MyStem process
 
         string textToAnalyze1 = "Первый текст для параллельного анализа.";
@@ -354,7 +354,7 @@ During the development and use of the MyStemSharpness library, some difficulties
 Despite potential difficulties, MyStemSharpness is designed with a focus on high performance:
 
 - **Efficient Process Management:** The library reuses MyStem process instances, minimizing the overhead of starting new processes for each request.
-- **Asynchronous Reading (Multi-Threaded Mode):** The `MultiThreadedMyStem` class uses asynchronous reading of MyStem's output, which prevents blocking the calling thread and increases overall throughput.
+- **Asynchronous Reading (Multi-Threaded Mode):** The `FastMyStem` class uses asynchronous reading of MyStem's output, which prevents blocking the calling thread and increases overall throughput.
 - **Optimized Buffers:** Buffers are used for reading output data, and their size is dynamically estimated based on the input text size, reducing the number of memory allocation operations.
 - **Separation into Single-Threaded and Multi-Threaded Versions:** By providing separate classes for different usage scenarios, we allow you to choose the optimal approach for your specific needs, avoiding unnecessary synchronization in single-threaded scenarios.
 

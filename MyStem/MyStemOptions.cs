@@ -3,7 +3,7 @@ namespace MyStem;
 /// <summary>
 /// Represents the command-line options for the MyStem executable.
 /// </summary>
-public class MyStemOptions
+public sealed class MyStemOptions
 {
 	/// <summary>
 	/// The path to the MyStem executable.
