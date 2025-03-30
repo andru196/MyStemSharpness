@@ -5,6 +5,10 @@
 
 Добро пожаловать в MyStemSharpness! Этот проект представляет собой тщательно разработанную .NET-библиотеку на языке C#, предназначенную для обеспечения эффективного и удобного взаимодействия с мощным лингвистическим инструментом MyStem. Мы понимаем, насколько важно иметь надежный и быстрый способ интеграции возможностей MyStem в ваши приложения, и именно поэтому создали эту библиотеку.
 
+**⚠️ Внимание: Многопоточность не рекомендуется!**
+
+Классы `MyStem` и `FastMyStem` **не предназначены для одновременного использования из разных потоков в рамках одного экземпляра**. Если вам необходимо выполнять анализ в многопоточной среде, настоятельно рекомендуется создавать **отдельные экземпляры** классов `MyStem` или `FastMyStem` для каждого потока.
+
 ## 🚀 Начало работы
 
 Если вы готовы погрузиться в мир лингвистического анализа с MyStemSharpness, вот первые шаги:
@@ -13,7 +17,6 @@
 
     ```bash
     dotnet add package MyStemSharpness
-
     ```
 
 2.  **Добавление пространства имен:** В файлах, где вы планируете использовать MyStemSharpness, добавьте следующую строку в начало:
@@ -28,7 +31,7 @@
 
 Чтобы вы могли быстро оценить возможности MyStemSharpness, мы подготовили несколько примеров использования для различных сценариев.
 
-### 💡 Однопоточный анализ
+### 💡 Однопоточный анализ (MyStem)
 
 Для задач, где не требуется высокая степень параллелизма или обработка выполняется последовательно, вы можете использовать класс `MyStem`.
 
@@ -66,39 +69,30 @@ public class SingleThreadedExample
 }
 ```
 
-### 🧵 Быстрый анализ
+### ⚡ Быстрый анализ (FastMyStem)
 
-Для приложений, где важна высокая производительность и обработка больших объемов текста, используйте класс `FastMyStem`.
+Для приложений, где важна высокая производительность, используйте класс `FastMyStem`.
 
 ```csharp
 using MyStem;
 using System;
 using System.IO;
-using System.Threading.Tasks;
 
 public class FastMyStemExample
 {
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         // Укажите путь к исполняемому файлу MyStem, если он отличается от "mystem.exe"
         FastMyStem.PathToMyStem = "path/to/mystem.exe";
 
         // Создайте экземпляр класса
         using var myStem = new FastMyStem();
-        myStem.Initialize(); // Инициализация процесса MyStem
 
-        string textToAnalyze1 = "Первый текст для параллельного анализа.";
-        string textToAnalyze2 = "Второй текст, который будет обработан одновременно.";
-
-        var task1 = Task.Run(() => myStem.MultiAnalysis(textToAnalyze1));
-        var task2 = Task.Run(() => myStem.MultiAnalysis(textToAnalyze2));
-
+        string textToAnalyze = "Этот текст будет обработан с использованием FastMyStem.";
         try
         {
-            string result1 = await task1;
-            string result2 = await task2;
-            Console.WriteLine($"Результат анализа 1: {result1}");
-            Console.WriteLine($"Результат анализа 2: {result2}");
+            string result = myStem.MultiAnalysis(textToAnalyze);
+            Console.WriteLine($"Результат быстрого анализа: {result}");
         }
         catch (FileNotFoundException ex)
         {
@@ -162,17 +156,17 @@ public class OptionsExample
 
 В процессе разработки и использования библиотеки MyStemSharpness могут возникнуть некоторые трудности:
 
-- **Кодировка:** Неправильная настройка кодировки может привести к некорректному анализу текста. По умолчанию используется UTF-8, но при необходимости вы можете настроить другие кодировки через `MyStemOptions`.
-- **Обработка ошибок MyStem:** Хотя библиотека старается обрабатывать исключения, ошибки, возникающие непосредственно в процессе MyStem, могут потребовать дополнительной диагностики.
-- **Ресурсы системы:** Запуск внешнего процесса MyStem может потреблять системные ресурсы. При интенсивном использовании в многопоточной среде следите за загрузкой процессора и памяти.
+-   **Кодировка:** Неправильная настройка кодировки может привести к некорректному анализу текста. По умолчанию используется UTF-8, но при необходимости вы можете настроить другие кодировки через `MyStemOptions`.
+-   **Обработка ошибок MyStem:** Хотя библиотека старается обрабатывать исключения, ошибки, возникающие непосредственно в процессе MyStem, могут потребовать дополнительной диагностики.
+-   **Ресурсы системы:** Запуск внешнего процесса MyStem может потреблять системные ресурсы. При интенсивном использовании в многопоточной среде следите за загрузкой процессора и памяти.
 
 ## ⚡ Гарантия высокой производительности
 
 Несмотря на возможные трудности, MyStemSharpness разработан с акцентом на высокую производительность:
 
-- **Эффективное управление процессами:** Библиотека переиспользует экземпляры процесса MyStem, минимизируя накладные расходы на запуск новых процессов для каждого запроса.
-- **Асинхронное чтение (многопоточный режим):** В классе `FastMyStem` используется асинхронное чтение выходных данных MyStem, что позволяет избежать блокировки вызывающего потока и повышает общую пропускную способность.
-- **Оптимизированные буферы:** Для чтения выходных данных используются буферы, размер которых динамически оценивается на основе размера входного текста, что снижает количество операций выделения памяти.
+-   **Эффективное управление процессами:** Библиотека переиспользует экземпляры процесса MyStem, минимизируя накладные расходы на запуск новых процессов для каждого запроса.
+-   **Асинхронное чтение (класс `FastMyStem`):** Класс `FastMyStem` использует асинхронное чтение выходных данных MyStem, что позволяет избежать блокировки вызывающего потока и повышает общую пропускную способность. **Пожалуйста, обратите внимание: один и тот же экземпляр `FastMyStem` не предназначен для безопасного использования в разных потоках одновременно. Для многопоточной обработки рекомендуется создавать отдельные экземпляры класса для каждого потока.**
+-   **Оптимизированные буферы:** Для чтения выходных данных используются буферы, размер которых динамически оценивается на основе размера входного текста, что снижает количество операций выделения памяти.
 
 ## 🙏 Благодарности и вклад
 
@@ -187,6 +181,10 @@ public class OptionsExample
 
 Welcome to MyStemSharpness! This project is a carefully crafted .NET library in C# designed to provide efficient and convenient interaction with the powerful MyStem linguistic tool. We understand the importance of having a reliable and fast way to integrate MyStem's capabilities into your applications, and that's why we created this library.
 
+**⚠️ Warning: Multithreading Not Recommended!**
+
+The `MyStem` and `FastMyStem` classes are **not designed for concurrent use from different threads within the same instance**. If you need to perform analysis in a multithreaded environment, it is strongly recommended to create **separate instances** of the `MyStem` or `FastMyStem` classes for each thread.
+
 ## 🚀 Getting Started
 
 If you're ready to dive into the world of linguistic analysis with MyStemSharpness, here are the first steps:
@@ -195,7 +193,6 @@ If you're ready to dive into the world of linguistic analysis with MyStemSharpne
 
     ```bash
     dotnet add package MyStemSharpness
-
     ```
 
 2.  **Adding Namespace:** In the files where you plan to use MyStemSharpness, add the following line at the beginning:
@@ -210,7 +207,7 @@ If you're ready to dive into the world of linguistic analysis with MyStemSharpne
 
 To help you quickly appreciate the capabilities of MyStemSharpness, we have prepared several usage examples for different scenarios.
 
-### 💡 Single-Threaded Analysis
+### 💡 Single-Threaded Analysis (MyStem)
 
 For tasks where a high degree of parallelism is not required or processing is performed sequentially, you can use the `MyStem` class.
 
@@ -248,39 +245,30 @@ public class SingleThreadedExample
 }
 ```
 
-### 🧵 Fast Analysis
+### ⚡ Fast Analysis (FastMyStem)
 
-For applications where high performance and parallel processing of large volumes of text are important, use the `FastMyStem` class.
+For applications where high performance is important, use the `FastMyStem` class.
 
 ```csharp
 using MyStem;
 using System;
 using System.IO;
-using System.Threading.Tasks;
 
 public class FastMyStemExample
 {
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         // Specify the path to the MyStem executable if it's different from "mystem.exe"
         FastMyStem.PathToMyStem = "path/to/mystem.exe";
 
         // Create an instance of the class
         using var myStem = new FastMyStem();
-        myStem.Initialize(); // Initialize the MyStem process
 
-        string textToAnalyze1 = "Первый текст для параллельного анализа.";
-        string textToAnalyze2 = "Второй текст, который будет обработан одновременно.";
-
-        var task1 = Task.Run(() => myStem.MultiAnalysis(textToAnalyze1));
-        var task2 = Task.Run(() => myStem.MultiAnalysis(textToAnalyze2));
-
+        string textToAnalyze = "This text will be processed using FastMyStem.";
         try
         {
-            string result1 = await task1;
-            string result2 = await task2;
-            Console.WriteLine($"Analysis Result 1: {result1}");
-            Console.WriteLine($"Analysis Result 2: {result2}");
+            string result = myStem.MultiAnalysis(textToAnalyze);
+            Console.WriteLine($"Fast Analysis Result: {result}");
         }
         catch (FileNotFoundException ex)
         {
@@ -344,17 +332,17 @@ public class OptionsExample
 
 During the development and use of the MyStemSharpness library, some difficulties may arise:
 
-- **Encoding:** Incorrect encoding settings can lead to incorrect text analysis. UTF-8 is used by default, but you can configure other encodings via `MyStemOptions` if needed.
-- **MyStem Error Handling:** While the library tries to handle exceptions, errors originating directly from the MyStem process might require additional diagnostics.
-- **System Resources:** Running the external MyStem process can consume system resources. With intensive use in a multi-threaded environment, monitor CPU and memory usage.
+-   **Encoding:** Incorrect encoding settings can lead to incorrect text analysis. UTF-8 is used by default, but you can configure other encodings via `MyStemOptions` if needed.
+-   **MyStem Error Handling:** While the library tries to handle exceptions, errors originating directly from the MyStem process might require additional diagnostics.
+-   **System Resources:** Running the external MyStem process can consume system resources. With intensive use in a multi-threaded environment, monitor CPU and memory usage.
 
 ## ⚡ High-Performance Guarantee
 
 Despite potential difficulties, MyStemSharpness is designed with a focus on high performance:
 
-- **Efficient Process Management:** The library reuses MyStem process instances, minimizing the overhead of starting new processes for each request.
-- **Asynchronous Reading (Multi-Threaded Mode):** The `FastMyStem` class uses asynchronous reading of MyStem's output, which prevents blocking the calling thread and increases overall throughput.
-- **Optimized Buffers:** Buffers are used for reading output data, and their size is dynamically estimated based on the input text size, reducing the number of memory allocation operations.
+-   **Efficient Process Management:** The library reuses MyStem process instances, minimizing the overhead of starting new processes for each request.
+-   **Asynchronous Reading (Class `FastMyStem`):** The `FastMyStem` class uses asynchronous reading of MyStem's output, which prevents blocking the calling thread and increases overall throughput. **Please note: the same instance of `FastMyStem` is not intended for safe use in different threads simultaneously. For multithreaded processing, it is recommended to create separate instances of the class for each thread.**
+-   **Optimized Buffers:** Buffers are used for reading output data, and their size is dynamically estimated based on the input text size, reducing the number of memory allocation operations.
 
 ## 🙏 Acknowledgments and Contributions
 
