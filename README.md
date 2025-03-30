@@ -30,7 +30,7 @@
 
 ### 💡 Однопоточный анализ
 
-Для задач, где не требуется высокая степень параллелизма или обработка выполняется последовательно, вы можете использовать класс `SingleThreadedMyStem`.
+Для задач, где не требуется высокая степень параллелизма или обработка выполняется последовательно, вы можете использовать класс `MyStem`.
 
 ```csharp
 using MyStem;
@@ -42,10 +42,10 @@ public class SingleThreadedExample
     public static void Main(string[] args)
     {
         // Укажите путь к исполняемому файлу MyStem, если он отличается от "mystem.exe"
-        SingleThreadedMyStem.PathToMyStem = "path/to/mystem.exe";
+        MyStem.PathToMyStem = "path/to/mystem.exe";
 
         // Создайте экземпляр класса
-        using var myStem = new SingleThreadedMyStem();
+        using var myStem = new MyStem();
         myStem.Initialize(); // Инициализация процесса MyStem
 
         string textToAnalyze = "Это простой пример текста для анализа.";
@@ -68,7 +68,7 @@ public class SingleThreadedExample
 
 ### 🧵 Быстрый анализ
 
-Для приложений, где важна высокая производительность и параллельная обработка больших объемов текста, используйте класс `FastMyStem`.
+Для приложений, где важна высокая производительность и обработка больших объемов текста, используйте класс `FastMyStem`.
 
 ```csharp
 using MyStem;
@@ -134,10 +134,10 @@ public class OptionsExample
         };
 
         // Укажите путь к исполняемому файлу MyStem
-        SingleThreadedMyStem.PathToMyStem = "path/to/mystem.exe";
+        MyStem.PathToMyStem = "path/to/mystem.exe";
 
         // Создайте экземпляр класса, передав опции
-        using var myStem = new SingleThreadedMyStem(options);
+        using var myStem = new MyStem(options);
         myStem.Initialize(); // Инициализация процесса MyStem
 
         string textToAnalyze = "Пример текста с настройками.";
@@ -173,7 +173,6 @@ public class OptionsExample
 - **Эффективное управление процессами:** Библиотека переиспользует экземпляры процесса MyStem, минимизируя накладные расходы на запуск новых процессов для каждого запроса.
 - **Асинхронное чтение (многопоточный режим):** В классе `FastMyStem` используется асинхронное чтение выходных данных MyStem, что позволяет избежать блокировки вызывающего потока и повышает общую пропускную способность.
 - **Оптимизированные буферы:** Для чтения выходных данных используются буферы, размер которых динамически оценивается на основе размера входного текста, что снижает количество операций выделения памяти.
-- **Разделение на однопоточную и многопоточную версии:** Предоставляя отдельные классы для разных сценариев использования, мы позволяем вам выбирать оптимальный подход для ваших конкретных потребностей, избегая ненужной синхронизации в однопоточных сценариях.
 
 ## 🙏 Благодарности и вклад
 
@@ -213,7 +212,7 @@ To help you quickly appreciate the capabilities of MyStemSharpness, we have prep
 
 ### 💡 Single-Threaded Analysis
 
-For tasks where a high degree of parallelism is not required or processing is performed sequentially, you can use the `SingleThreadedMyStem` class.
+For tasks where a high degree of parallelism is not required or processing is performed sequentially, you can use the `MyStem` class.
 
 ```csharp
 using MyStem;
@@ -225,10 +224,10 @@ public class SingleThreadedExample
     public static void Main(string[] args)
     {
         // Specify the path to the MyStem executable if it's different from "mystem.exe"
-        SingleThreadedMyStem.PathToMyStem = "path/to/mystem.exe";
+        MyStem.PathToMyStem = "path/to/mystem.exe";
 
         // Create an instance of the class
-        using var myStem = new SingleThreadedMyStem();
+        using var myStem = new MyStem();
         myStem.Initialize(); // Initialize the MyStem process
 
         string textToAnalyze = "Это простой пример текста для анализа.";
@@ -317,10 +316,10 @@ public class OptionsExample
         };
 
         // Specify the path to the MyStem executable
-        SingleThreadedMyStem.PathToMyStem = "path/to/mystem.exe";
+        MyStem.PathToMyStem = "path/to/mystem.exe";
 
         // Create an instance of the class, passing the options
-        using var myStem = new SingleThreadedMyStem(options);
+        using var myStem = new MyStem(options);
         myStem.Initialize(); // Initialize the MyStem process
 
         string textToAnalyze = "Пример текста с настройками.";
@@ -356,12 +355,9 @@ Despite potential difficulties, MyStemSharpness is designed with a focus on high
 - **Efficient Process Management:** The library reuses MyStem process instances, minimizing the overhead of starting new processes for each request.
 - **Asynchronous Reading (Multi-Threaded Mode):** The `FastMyStem` class uses asynchronous reading of MyStem's output, which prevents blocking the calling thread and increases overall throughput.
 - **Optimized Buffers:** Buffers are used for reading output data, and their size is dynamically estimated based on the input text size, reducing the number of memory allocation operations.
-- **Separation into Single-Threaded and Multi-Threaded Versions:** By providing separate classes for different usage scenarios, we allow you to choose the optimal approach for your specific needs, avoiding unnecessary synchronization in single-threaded scenarios.
 
 ## 🙏 Acknowledgments and Contributions
 
 We hope that MyStemSharpness will become a valuable tool in your arsenal. We welcome your feedback, suggestions, and contributions to the project's development. Stay tuned for updates and new features!
 
-```
 </details>
-```
