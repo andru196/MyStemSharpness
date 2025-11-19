@@ -1,41 +1,22 @@
-namespace MyStem;
+namespace MyStemSharpness.Implementations;
 
+using Microsoft.Extensions.Options;
+using MyStemSharpness.Configuration;
+using MyStemSharpness.Interfaces;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 /// <summary>
 /// <b>Cannot be used in a multithreaded environment!</b> A class for interacting with the MyStem executable.
 /// </summary>
-public sealed class FastMyStem : IDisposable
+public sealed class FastMyStem : IMyStem
 {
-	/// <summary>
-	/// The default timeout for reading data from the MyStem process.
-	/// </summary>
-	public static readonly int TimeoutMs = 50;
-
-	/// <summary>
-	/// Factor used to estimate the initial total buffer size for reading the output.
-	/// </summary>
-	public static float TotalBufferFactorSize = 3.5f;
-
-	/// <summary>
-	/// Factor used to estimate the initial step buffer size for reading the output.
-	/// </summary>
-	public static float StepBufferFactorSize = 2.5f;
-
-	/// <summary>
-	/// The string that marks the end of the input for MyStem.
-	/// </summary>
-	public static string EndString = "\nъъ";
-
-	/// <summary>
-	/// The string that is replaced with an empty string in the output.
-	/// </summary>
-	public static string EndReplaceString = "ъъ??\r\n";
 
 	private static readonly Encoding encoding = Encoding.UTF8;
+	private readonly SemaphoreSlim _processLock = new(1, 1);
 
 	/// <summary>
 	/// The process instance for the MyStem executable.
@@ -50,16 +31,16 @@ public sealed class FastMyStem : IDisposable
 	/// <summary>
 	/// The options to configure the MyStem process.
 	/// </summary>
-	public MyStemOptions Options { get; }
+	public IOptions<MyStemOptions> Options { get; }
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="FastMyStem"/> class with the specified options. <b>Requires the <c>LineByLine</c> option to be set to true.</b>
 	/// </summary>
 	/// <param name="options">The MyStem options to use.</param>
-	public FastMyStem(MyStemOptions? options = null)
+	public FastMyStem(IOptions<MyStemOptions>? options = null)
 	{
-		Options = options ?? new MyStemOptions();
-		Options.LineByLine = true; // Required for stream reading
+		Options = options ?? Microsoft.Extensions.Options.Options.Create(new MyStemOptions());
+		Options.Value.LineByLine = true; // Required for stream reading
 	}
 
 	/// <summary>
@@ -70,26 +51,41 @@ public sealed class FastMyStem : IDisposable
 	{
 		if (mystemProcess == null || mystemProcess.HasExited)
 		{
-			mystemProcess?.Dispose();
-			mystemProcess = new Process
-			{
-				StartInfo = new ProcessStartInfo
-				{
-					FileName = MyStemOptions.PathToMyStem,
-					Arguments = Options.GetArguments(),
-					UseShellExecute = false,
-					RedirectStandardInput = true,
-					RedirectStandardOutput = true,
-					RedirectStandardError = true,
-					CreateNoWindow = true,
-					WindowStyle = ProcessWindowStyle.Hidden,
-					StandardOutputEncoding = Encoding.UTF8
-				}
-			};
 
-			if (!mystemProcess.Start())
+			_processLock.Wait();
+			try
 			{
-				throw new Exception("Failed to start MyStem process.");
+				try
+				{
+					mystemProcess?.Kill();
+					mystemProcess?.Dispose();
+				}
+				catch { }
+
+				mystemProcess = new Process
+				{
+					StartInfo = new ProcessStartInfo
+					{
+						FileName = Options.Value.PathToMyStem,
+						Arguments = Options.Value.GetArguments(),
+						UseShellExecute = false,
+						RedirectStandardInput = true,
+						RedirectStandardOutput = true,
+						RedirectStandardError = true,
+						CreateNoWindow = true,
+						WindowStyle = ProcessWindowStyle.Hidden,
+						StandardOutputEncoding = Encoding.UTF8
+					}
+				};
+
+				if (!mystemProcess.Start())
+				{
+					throw new Exception("Failed to start MyStem process.");
+				}
+			}
+			finally
+			{
+				_processLock.Release();
 			}
 		}
 	}
@@ -101,12 +97,22 @@ public sealed class FastMyStem : IDisposable
 	/// <returns>The analysis result from MyStem.</returns>
 	/// <exception cref="FileNotFoundException">If the MyStem executable is not found at the specified path.</exception>
 	/// <exception cref="FormatException">If an error occurs during the MyStem analysis.</exception>
-	public string MultiAnalysis(string text)
+	public string Analysis(string text)
 	{
 		try
 		{
 			InitializeProcess();
-			return GetResults(text);
+			try
+			{
+				_processLock.Wait();
+
+				return GetResults(text);
+
+			}
+			finally
+			{
+				_processLock.Release();
+			}
 		}
 		catch (Exception ex)
 		{
@@ -122,15 +128,15 @@ public sealed class FastMyStem : IDisposable
 	private string GetResults(string inputText)
 	{
 		// Добавляем завершающую последовательность к входному тексту
-		inputText += EndString;
+		inputText += Options.Value.EndString;
 		mystemProcess!.StandardInput.WriteLine(inputText);
 		mystemProcess.StandardInput.Flush();
 
 		// Создаем MemoryStream для накопления всех байт
-		MemoryStream memoryStream = new((int)Math.Round(inputText.Length * TotalBufferFactorSize));
+		MemoryStream memoryStream = new((int)Math.Round(inputText.Length * Options.Value.TotalBufferFactorSize));
 
 		// Размер буфера определяется как функция от размера входного текста
-		byte[] byteBuffer = new byte[(int)Math.Round(inputText.Length * StepBufferFactorSize)];
+		byte[] byteBuffer = new byte[(int)Math.Round(inputText.Length * Options.Value.StepBufferFactorSize)];
 
 		int totalBytesRead = 0;
 		bool timeoutOccurred = false;
@@ -158,14 +164,15 @@ public sealed class FastMyStem : IDisposable
 				{
 					// Асинхронное чтение с явным ожиданием
 					asyncResult = mystemProcess.StandardOutput.BaseStream.BeginRead(byteBuffer, 0, byteBuffer.Length, null, null);
-					if (asyncResult.AsyncWaitHandle.WaitOne(TimeoutMs))
+					if (asyncResult.AsyncWaitHandle.WaitOne(Options.Value.TimeoutMs))
 					{
 						bytesRead = mystemProcess.StandardOutput.BaseStream.EndRead(asyncResult);
 					}
 				}
+
 				finally
 				{
-					asyncResult?.AsyncWaitHandle.Close();
+					asyncResult?.AsyncWaitHandle?.Close();
 				}
 			}
 
@@ -181,6 +188,7 @@ public sealed class FastMyStem : IDisposable
 
 			// Декодируем только что полученный кусок, чтобы проверить наличие завершающей последовательности "ъъ"
 			string chunk = encoding.GetString(byteBuffer, 0, bytesRead);
+
 			if (chunk.IndexOf("ъъ", StringComparison.Ordinal) >= 0)
 			{
 				break;
@@ -196,7 +204,7 @@ public sealed class FastMyStem : IDisposable
 		// Сбрасываем позицию в начале MemoryStream для декодирования
 		memoryStream.Seek(0, SeekOrigin.Begin);
 		// Декодируем все накопленные байты за один раз и заменяем специальную последовательность, если она есть
-		string result = encoding.GetString(memoryStream.ToArray()).Replace(EndReplaceString, string.Empty);
+		string result = encoding.GetString(memoryStream.ToArray()).Replace(Options.Value.EndReplaceString, string.Empty).Trim();
 
 		memoryStream.Dispose();
 		return result;

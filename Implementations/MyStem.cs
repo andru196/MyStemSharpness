@@ -1,5 +1,8 @@
-namespace MyStem;
+namespace MyStemSharpness.Implementations;
 
+using Microsoft.Extensions.Options;
+using MyStemSharpness.Configuration;
+using MyStemSharpness.Interfaces;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -11,7 +14,7 @@ using System.Text;
 /// <remarks>
 /// This class is not recommended for use in multithreaded scenarios.
 /// </remarks>
-public sealed class MyStem : IDisposable
+public sealed class MyStem : IMyStem
 {
 	/// <summary>
 	/// The process instance for the MyStem executable.
@@ -26,15 +29,16 @@ public sealed class MyStem : IDisposable
 	/// <summary>
 	/// The options to configure the MyStem process.
 	/// </summary>
-	public MyStemOptions Options { get; }
+	public IOptions<MyStemOptions> Options { get; }
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="MyStem"/> class with the specified options.
 	/// </summary>
 	/// <param name="options">The MyStem options to use.</param>
-	public MyStem(MyStemOptions? options = null)
+	public MyStem(IOptions<MyStemOptions>? options = null)
 	{
-		Options = options ?? new MyStemOptions();
+		Options = options ?? Microsoft.Extensions.Options.Options.Create(new MyStemOptions());
+
 	}
 
 	/// <summary>
@@ -49,8 +53,8 @@ public sealed class MyStem : IDisposable
 			{
 				StartInfo = new ProcessStartInfo
 				{
-					FileName = MyStemOptions.PathToMyStem,
-					Arguments = Options.GetArguments(),
+					FileName = Options.Value.PathToMyStem,
+					Arguments = Options.Value.GetArguments(),
 					UseShellExecute = false,
 					RedirectStandardInput = true,
 					RedirectStandardOutput = true,
@@ -73,7 +77,7 @@ public sealed class MyStem : IDisposable
 	/// <exception cref="FormatException">If an error occurs during the MyStem analysis.</exception>
 	public string Analysis(string text)
 	{
-		if (!File.Exists(MyStemOptions.PathToMyStem))
+		if (!File.Exists(Options.Value.PathToMyStem))
 		{
 			throw new FileNotFoundException("Path to MyStem.exe is not valid!");
 		}

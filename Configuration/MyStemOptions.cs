@@ -1,4 +1,4 @@
-namespace MyStem;
+namespace MyStemSharpness.Configuration;
 
 /// <summary>
 /// Represents the command-line options for the MyStem executable.
@@ -8,7 +8,7 @@ public sealed class MyStemOptions
 	/// <summary>
 	/// The path to the MyStem executable.
 	/// </summary>
-	public static string PathToMyStem { get; set; } = "mystem.exe";
+	public string PathToMyStem { get; set; } = "mystem.exe";
 
 	/// <summary>
 	/// Enables line-by-line mode; each word is printed on a new line.
@@ -90,6 +90,32 @@ public sealed class MyStemOptions
 	/// Prints the context-free probability of the lemma.
 	/// </summary>
 	public bool PrintLemmaWeight { get; set; }
+
+	/// <summary>
+	/// The default timeout for reading data from the MyStem process.
+	/// </summary>
+	public int TimeoutMs { get; set; } = 50;
+
+	/// <summary>
+	/// Factor used to estimate the initial total buffer size for reading the output.
+	/// </summary>
+	public float TotalBufferFactorSize { get; set; } = 3.5f;
+
+	/// <summary>
+	/// Factor used to estimate the initial step buffer size for reading the output.
+	/// </summary>
+	public float StepBufferFactorSize { get; set; } = 2.5f;
+
+	/// <summary>
+	/// The string that marks the end of the input for MyStem.
+	/// </summary>
+	public string EndString { get; set; } = "\nъъ";
+
+	/// <summary>
+	/// The string that is replaced with an empty string in the output.
+	/// </summary>
+	public string EndReplaceString { get; set; } = "ъъ??\r\n";
+
 
 	/// <summary>
 	/// Gets the command-line arguments string based on the current options.
