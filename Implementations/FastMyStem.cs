@@ -52,40 +52,32 @@ public sealed class FastMyStem : IMyStem
 		if (mystemProcess == null || mystemProcess.HasExited)
 		{
 
-			_processLock.Wait();
 			try
 			{
-				try
-				{
-					mystemProcess?.Kill();
-					mystemProcess?.Dispose();
-				}
-				catch { }
-
-				mystemProcess = new Process
-				{
-					StartInfo = new ProcessStartInfo
-					{
-						FileName = Options.Value.PathToMyStem,
-						Arguments = Options.Value.GetArguments(),
-						UseShellExecute = false,
-						RedirectStandardInput = true,
-						RedirectStandardOutput = true,
-						RedirectStandardError = true,
-						CreateNoWindow = true,
-						WindowStyle = ProcessWindowStyle.Hidden,
-						StandardOutputEncoding = Encoding.UTF8
-					}
-				};
-
-				if (!mystemProcess.Start())
-				{
-					throw new Exception("Failed to start MyStem process.");
-				}
+				mystemProcess?.Kill();
+				mystemProcess?.Dispose();
 			}
-			finally
+			catch { }
+
+			mystemProcess = new Process
 			{
-				_processLock.Release();
+				StartInfo = new ProcessStartInfo
+				{
+					FileName = Options.Value.PathToMyStem,
+					Arguments = Options.Value.GetArguments(),
+					UseShellExecute = false,
+					RedirectStandardInput = true,
+					RedirectStandardOutput = true,
+					RedirectStandardError = true,
+					CreateNoWindow = true,
+					WindowStyle = ProcessWindowStyle.Hidden,
+					StandardOutputEncoding = Encoding.UTF8
+				}
+			};
+
+			if (!mystemProcess.Start())
+			{
+				throw new Exception("Failed to start MyStem process.");
 			}
 		}
 	}
@@ -101,22 +93,18 @@ public sealed class FastMyStem : IMyStem
 	{
 		try
 		{
+			_processLock.Wait();
 			InitializeProcess();
-			try
-			{
-				_processLock.Wait();
 
-				return GetResults(text);
-
-			}
-			finally
-			{
-				_processLock.Release();
-			}
+			return GetResults(text);
 		}
 		catch (Exception ex)
 		{
 			throw new FormatException($"Error during MyStem analysis. See logs for details. Text: '{text}'", ex);
+		}
+		finally
+		{
+			_processLock.Release();
 		}
 	}
 
@@ -169,7 +157,11 @@ public sealed class FastMyStem : IMyStem
 						bytesRead = mystemProcess.StandardOutput.BaseStream.EndRead(asyncResult);
 					}
 				}
+				// Гасим ошибку, пока не станет понятно как её решить
+				catch (ObjectDisposedException)
+				{
 
+				}
 				finally
 				{
 					asyncResult?.AsyncWaitHandle?.Close();
@@ -231,7 +223,6 @@ public sealed class FastMyStem : IMyStem
 			}
 			disposed = true;
 		}
-		GC.SuppressFinalize(this);
 	}
 
 	/// <summary>
