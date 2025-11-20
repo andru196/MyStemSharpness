@@ -7,6 +7,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 
 /// <summary>
@@ -40,7 +41,8 @@ public sealed class FastMyStem : IMyStem
 	public FastMyStem(IOptions<MyStemOptions>? options = null)
 	{
 		Options = options ?? Microsoft.Extensions.Options.Options.Create(new MyStemOptions());
-		Options.Value.LineByLine = true; // Required for stream reading
+		//Options.Value.LineByLine = true;
+		// Required for stream reading
 	}
 
 	/// <summary>
@@ -124,11 +126,15 @@ public sealed class FastMyStem : IMyStem
 		MemoryStream memoryStream = new((int)Math.Round(inputText.Length * Options.Value.TotalBufferFactorSize));
 
 		// Размер буфера определяется как функция от размера входного текста
-		byte[] byteBuffer = new byte[(int)Math.Round(inputText.Length * Options.Value.StepBufferFactorSize)];
+		var byteBuffer = new byte[(int)Math.Round(inputText.Length * Options.Value.StepBufferFactorSize)];
 
-		int totalBytesRead = 0;
-		bool timeoutOccurred = false;
+		var totalBytesRead = 0;
+		var timeoutOccurred = false;
 
+		byte[] stopBytes = encoding.GetBytes(Options.Value.EndString.Trim());
+		int stopMatchIndex = 0;
+
+		var findStop = false;
 		// Основной цикл чтения
 		while (mystemProcess.StandardOutput.BaseStream.CanRead)
 		{
@@ -178,10 +184,10 @@ public sealed class FastMyStem : IMyStem
 			// Записываем прочитанные байты в MemoryStream
 			memoryStream.Write(byteBuffer, 0, bytesRead);
 
-			// Декодируем только что полученный кусок, чтобы проверить наличие завершающей последовательности "ъъ"
-			string chunk = encoding.GetString(byteBuffer, 0, bytesRead);
-
-			if (chunk.IndexOf("ъъ", StringComparison.Ordinal) >= 0)
+			if (!findStop)
+				findStop = ContainsStopSequence(byteBuffer, bytesRead, stopBytes, ref stopMatchIndex);
+			// Поиск стоп-последовательности с учетом пересечения буферов
+			if (findStop && byteBuffer.Contains((byte)'\n'))
 			{
 				break;
 			}
@@ -200,6 +206,33 @@ public sealed class FastMyStem : IMyStem
 
 		memoryStream.Dispose();
 		return result;
+	}
+
+
+	private bool ContainsStopSequence(byte[] buffer, int count, byte[] stopBytes, ref int matchIndex)
+	{
+		for (int i = 0; i < count; i++)
+		{
+			if (buffer[i] == stopBytes[matchIndex])
+			{
+				matchIndex++;
+				if (matchIndex == stopBytes.Length)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				matchIndex = 0;
+				// Если текущий байт совпадает с первым байтом стоп-последовательности, 
+				// нужно проверить его снова
+				if (buffer[i] == stopBytes[0])
+				{
+					matchIndex = 1;
+				}
+			}
+		}
+		return false;
 	}
 
 	/// <summary>
